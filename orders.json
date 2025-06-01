@@ -1,0 +1,140 @@
+[
+  {
+    "id": 1,
+    "customer_name": "Nguyễn Văn A",
+    "email": "nguyenvana@gmail.com",
+    "items": [
+      {
+        "product_id": 101,
+        "quantity": 2
+      },
+      {
+        "product_id": 205,
+        "quantity": 1
+      }
+    ],
+    "total_price": 1850000,
+    "status": "delivered",
+    "order_date": "2023-10-15 14:30:22"
+  },
+  {
+    "id": 2,
+    "customer_name": "Trần Thị B",
+    "email": "tranthib@yahoo.com",
+    "items": [
+      {
+        "product_id": 305,
+        "quantity": 1
+      },
+      {
+        "product_id": 412,
+        "quantity": 3
+      },
+      {
+        "product_id": 107,
+        "quantity": 1
+      }
+    ],
+    "total_price": 2750000,
+    "status": "processing",
+    "order_date": "2023-10-18 09:15:47"
+  },
+  {
+    "id": 3,
+    "customer_name": "Lê Văn C",
+    "email": "levanc@gmail.com",
+    "items": [
+      {
+        "product_id": 208,
+        "quantity": 1
+      }
+    ],
+    "total_price": 750000,
+    "status": "pending",
+    "order_date": "2023-10-20 16:45:33"
+  },
+  {
+    "id": 4,
+    "customer_name": "Phạm Thị D",
+    "email": "phamthid@outlook.com",
+    "items": [
+      {
+        "product_id": 512,
+        "quantity": 2
+      },
+      {
+        "product_id": 309,
+        "quantity": 1
+      }
+    ],
+    "total_price": 3200000,
+    "status": "shipped",
+    "order_date": "2023-10-21 11:20:18"
+  },
+  {
+    "id": 5,
+    "customer_name": "Hoàng Văn E",
+    "email": "hoangve@gmail.com",
+    "items": [
+      {
+        "product_id": 101,
+        "quantity": 1
+      },
+      {
+        "product_id": 205,
+        "quantity": 2
+      },
+      {
+        "product_id": 308,
+        "quantity": 1
+      }
+    ],
+    "total_price": 2450000,
+    "status": "cancelled",
+    "order_date": "2023-10-22 13:10:05"
+  },
+  {
+    "id": 6,
+    "customer_name": "customer",
+    "email": "customer@example.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 2
+      },
+      {
+        "product_id": 3,
+        "quantity": 1
+      },
+      {
+        "product_id": 461,
+        "quantity": 1
+      },
+      {
+        "product_id": 473,
+        "quantity": 1
+      }
+    ],
+    "total_price": 11500009728000,
+    "status": "pending",
+    "order_date": "2025-05-31 14:32:56"
+  },
+  {
+    "id": 7,
+    "customer_name": "customer",
+    "email": "customer@example.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 1
+      },
+      {
+        "product_id": 3,
+        "quantity": 1
+      }
+    ],
+    "total_price": 6849000,
+    "status": "pending",
+    "order_date": "2025-06-01 22:16:06"
+  }
+]

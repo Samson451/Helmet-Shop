@@ -1,0 +1,67 @@
+[
+  {
+    "type_id": 1,
+    "type_name": "Nón Fullface",
+    "loai": 1
+  },
+  {
+    "type_id": 2,
+    "type_name": "Nón Bảo Hiểm 3/4",
+    "loai": 1
+  },
+  {
+    "type_id": 3,
+    "type_name": "Nón Nửa Đầu",
+    "loai": 1
+  },
+  {
+    "type_id": 4,
+    "type_name": "Phụ Kiện Phượt",
+    "loai": 2
+  },
+  {
+    "type_id": 5,
+    "type_name": "Giá Đỡ Điện Thoại",
+    "loai": 2
+  },
+  {
+    "type_id": 6,
+    "type_name": "Tai Nghe Bluetooth Mũ",
+    "loai": 2
+  },
+  {
+    "type_id": 7,
+    "type_name": "Áo Mưa Bộ GIVI",
+    "loai": 3
+  },
+  {
+    "type_id": 8,
+    "type_name": "Găng Tay Phượt",
+    "loai": 3
+  },
+  {
+    "type_id": 9,
+    "type_name": "Giáp Bảo Hộ",
+    "loai": 3
+  },
+  {
+    "type_id": 10,
+    "type_name": "Ba Lô Chuyên Phượt",
+    "loai": 3
+  },
+  {
+    "type_id": 11,
+    "type_name": "Thùng Xe Máy GiVi",
+    "loai": 2
+  },
+  {
+    "type_id": 12,
+    "type_name": "Giày Bảo Hộ LS2",
+    "loai": 3
+  },
+  {
+    "type_id": 13,
+    "type_name": "DM_test",
+    "loai": 1
+  }
+]

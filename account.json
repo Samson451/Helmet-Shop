@@ -1,0 +1,49 @@
+{
+  "accounts": [
+    {
+      "id": 1,
+      "username": "customer",
+      "password": "customer123",
+      "email": "customer@example.com",
+      "cart": [
+        {
+          "product_id": 3,
+          "quantity": 1
+        }
+      ],
+      "type_acc": "customer"
+    },
+    {
+      "id": 2,
+      "username": "admin",
+      "password": "admin123",
+      "email": "admin@example.com",
+      "cart": [],
+      "type_acc": "admin"
+    },
+    {
+      "id": 3,
+      "username": "owner",
+      "password": "owner123",
+      "email": "owner@example.com",
+      "cart": [],
+      "type_acc": "owner"
+    },
+    {
+      "id": 4,
+      "username": "long",
+      "password": "long123",
+      "email": "longt2260@gmail.com",
+      "cart": [],
+      "type_acc": "customer"
+    },
+    {
+      "id": 5,
+      "username": "Long123",
+      "password": "long123",
+      "email": "longggg@gmail.com",
+      "cart": [],
+      "type_acc": "customer"
+    }
+  ]
+}
