@@ -6,12 +6,8 @@ import os
 import datetime
 from Login import show_login_window
 from Helper import center_window
-from Data_process import (
-    load_users, save_users, get_user_by_username,
-    load_products, get_product_by_id,
-    load_categories,
-    load_orders, save_orders, get_next_order_id
-)
+from Data_process import load_users, save_users, load_products,load_categories, get_next_order_id
+
 
 # ===== Load dữ liệu từ module xử lý =====
 product_data = load_products()
@@ -57,9 +53,6 @@ products_per_page = 12
 current_page = 0
 logged_in = False
 current_user = None
-
-# Declare global variables that will be assigned in init_main_ui
-# Initialize them to None or empty lists/dicts
 root = None
 search_entry = None
 header_frame = None
@@ -69,12 +62,11 @@ canvas = None
 scrollbar = None
 scrollable_frame = None
 scrollable_frame_id = None
-columns = 4 # Default columns
+columns = 4 
 current_product_list = all_products.copy()
-# Moved menu_expanded inside init_main_ui
 menu_items_widgets = []
 SEARCH_PLACEHOLDER = "Tìm kiếm sản phẩm..."
-logo_photo = None # Added global reference for logo image
+logo_photo = None 
 
 
 def paginate(products, page):
@@ -187,12 +179,10 @@ def show_product_popup(product):
     button_frame = tk.Frame(details_frame, bg="#232333")
     button_frame.pack(pady=20)
 
-    add_to_cart_btn = tk.Button(button_frame, text="Thêm vào giỏ hàng", font=("Arial", 10, "bold"), bg="#00ADB5", fg="white", command=lambda: add_to_cart(product.get("id")),
-                                bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
+    add_to_cart_btn = tk.Button(button_frame, text="Thêm vào giỏ hàng", font=("Arial", 10, "bold"), bg="#00ADB5", fg="white", command=lambda: add_to_cart(product.get("id")), bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
     add_to_cart_btn.pack(side="left", padx=10)
 
-    close_btn = tk.Button(button_frame, text="Đóng", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=popup.destroy, 
-                          bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
+    close_btn = tk.Button(button_frame, text="Đóng", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=popup.destroy,  bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
     close_btn.pack(side="left", padx=10)
 
     popup.grab_set() 
@@ -218,7 +208,7 @@ def add_to_cart_with_quantity(product_id, quantity):
             found_item = False
             for item in account["cart"]:
                 if item["product_id"] == product_id:
-                    item["quantity"] += quantity # Cập nhật số lượng
+                    item["quantity"] += quantity
                     found_item = True
                     break
 
@@ -295,7 +285,6 @@ def display_products(product_list):
     products_frame.pack(fill="both", expand=True, pady=(0, 20))
     
     global columns 
-    # columns is already defined as global and initialized
     if 'columns' not in globals():
         columns = 4 
 
@@ -332,19 +321,14 @@ def show_pagination(product_list):
     pagination_frame = tk.Frame(pagination_center, bg=pagination_container_bg, padx=10, pady=5)
     pagination_frame.pack()
     
-    prev_btn = tk.Button(pagination_frame, text="⬅ Trước", command=prev_page, 
-                         bg=button_normal_bg, fg=text_fg, font=("Arial", 10, "bold"),
-                         activebackground=button_active_bg, padx=12, pady=6, bd=0, relief="flat", cursor="hand2")
+    prev_btn = tk.Button(pagination_frame, text="⬅ Trước", command=prev_page, bg=button_normal_bg, fg=text_fg, font=("Arial", 10, "bold"), activebackground=button_active_bg, padx=12, pady=6, bd=0, relief="flat", cursor="hand2")
     prev_btn.grid(row=0, column=0, padx=(0, 5))
     
     total_pages = max(1, (len(product_list) - 1) // products_per_page + 1)
-    page_label = tk.Label(pagination_frame, text=f"Trang {current_page + 1}/{total_pages}", 
-                           font=("Arial", 10, "bold"), bg=pagination_container_bg, fg=text_fg, padx=10)
+    page_label = tk.Label(pagination_frame, text=f"Trang {current_page + 1}/{total_pages}", font=("Arial", 10, "bold"), bg=pagination_container_bg, fg=text_fg, padx=10)
     page_label.grid(row=0, column=1)
     
-    next_btn = tk.Button(pagination_frame, text="Tiếp ➡", command=next_page, 
-                         bg=button_normal_bg, fg=text_fg, font=("Arial", 10, "bold"),
-                         activebackground=button_active_bg, padx=12, pady=6, bd=0, relief="flat", cursor="hand2")
+    next_btn = tk.Button(pagination_frame, text="Tiếp ➡", command=next_page, bg=button_normal_bg, fg=text_fg, font=("Arial", 10, "bold"), activebackground=button_active_bg, padx=12, pady=6, bd=0, relief="flat", cursor="hand2")
     next_btn.grid(row=0, column=2, padx=(5, 0))
     
     prev_state = "normal" if current_page > 0 else "disabled"
@@ -377,7 +361,6 @@ def prev_page():
 def search_products():
     global current_product_list, current_page
     keyword = search_entry.get().lower().strip()
-    # If the placeholder is present, clear the search
     if keyword == SEARCH_PLACEHOLDER.lower():
         current_product_list = all_products.copy()
     else:
@@ -441,16 +424,16 @@ def show_cart():
 
     cart_window = tk.Toplevel(root)
     cart_window.title("Giỏ Hàng")
-    center_window(cart_window, 700, 450) # Điều chỉnh kích thước để có chỗ cho cột xóa
+    center_window(cart_window, 700, 450) 
     cart_window.resizable(False, False)
-    cart_window.configure(bg="#232333") # Giữ nguyên màu nền nếu bạn có
+    cart_window.configure(bg="#232333") 
 
-    accounts_dict = load_users() # Giả định load_users() trả về dictionary {username: account_data}
+    accounts_dict = load_users() 
 
     cart_items = []
     username = current_user.get("username")
     if username and username in accounts_dict:
-        # Lấy giỏ hàng của người dùng hiện tại từ dictionary
+    
         user_account = accounts_dict[username] 
         cart_items = user_account.get("cart", [])
     else:
@@ -569,15 +552,15 @@ def checkout(cart_window):
     global current_user
     
     # Lấy thông tin giỏ hàng
-    accounts_dict = load_users() # Tải tất cả tài khoản dưới dạng dictionary {username: account_data}
-    username = current_user["username"] # Lấy tên người dùng hiện tại
+    accounts_dict = load_users()
+    username = current_user["username"] 
 
     cart_items = []
     user_account = None
 
-    if username in accounts_dict: # Kiểm tra xem người dùng hiện tại có tồn tại không
-        user_account = accounts_dict[username] # Truy cập trực tiếp dictionary tài khoản của người dùng
-        cart_items = user_account.get("cart", []) # Lấy giỏ hàng của người dùng đó, nếu không có thì trả về list rỗng
+    if username in accounts_dict: 
+        user_account = accounts_dict[username] 
+        cart_items = user_account.get("cart", []) 
     else:
         messagebox.showerror("Lỗi", "Không tìm thấy thông tin tài khoản người dùng hiện tại.")
         cart_window.destroy()
@@ -594,21 +577,21 @@ def checkout(cart_window):
         product = next((p for p in all_products if p["id"] == item["product_id"]), None)
         if product:
             try:
-                # Đảm bảo giá là số để tính toán
+                
                 if isinstance(product.get("price"), str):
                     clean_price = ''.join(filter(str.isdigit, product["price"]))
                     price_value = int(clean_price) if clean_price else 0
                 else:
                     price_value = product["price"]
             except:
-                price_value = 0 # Giá mặc định là 0 nếu có lỗi chuyển đổi
-            total += price_value * item.get("quantity", 0) # Sử dụng .get("quantity", 0) cho an toàn
+                price_value = 0 
+            total += price_value * item.get("quantity", 0) 
     
     # Tạo đơn hàng mới
     new_order = {
         "id": get_next_order_id(),
-        "customer_name": username, # Sử dụng username trực tiếp
-        "email": user_account.get("email", "N/A"), # Lấy email từ user_account
+        "customer_name": username, 
+        "email": user_account.get("email", "N/A"), 
         "items": cart_items.copy(),
         "total_price": total,
         "status": "pending",
@@ -631,18 +614,17 @@ def show_login_dialog():
     def on_login_success(user_info):
         global logged_in, current_user
         if user_info["type_acc"] in ["admin", "owner"]:
-            root.withdraw()  # Hide the main UI
+            root.withdraw() 
 
             import admin
 
             def return_to_customer():
-                global root # Declare global root to ensure we're destroying the correct one
+                global root 
                 logout()  
-                if root: # Check if root exists before destroying
-                    root.destroy() # Destroy the old main window completely
-                init_main_ui() # This will create a brand new root window and rebuild the UI
+                if root: 
+                    root.destroy() 
+                init_main_ui()
             
-            # Call admin panel with callback
             admin.show_admin_panel(user_info, on_return_callback=return_to_customer)
         else:
             logged_in = True
@@ -659,8 +641,6 @@ def logout():
     update_login_ui()
 
 def open_admin_panel():
-    # This function might be called if an admin is already logged in and wants to reopen the panel
-    # Ensure it also imports the latest admin module
     import admin
     admin.show_admin_panel(current_user)
 
@@ -668,7 +648,7 @@ def update_login_ui():
     global account_frame
     try:
         if not account_frame or not account_frame.winfo_exists():
-            return  # frame đã bị destroy rồi
+            return  
     except:
         return
 
@@ -683,27 +663,21 @@ def update_login_ui():
         user_frame = tk.Frame(account_frame, bg=header_bg_color)
         user_frame.pack(side="right", padx=5)
 
-        tk.Label(user_frame, text=f"👤 {current_user['username']}", font=("Arial", 12), 
-                 bg=header_bg_color, fg=text_color).pack(side="left")
+        tk.Label(user_frame, text=f"👤 {current_user['username']}", font=("Arial", 12), bg=header_bg_color, fg=text_color).pack(side="left")
 
-        logout_btn = tk.Button(user_frame, text="Đăng xuất", font=("Arial", 12, "bold"), 
-                               bg=button_bg_color, fg=text_color, command=logout,
-                               bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
+        logout_btn = tk.Button(user_frame, text="Đăng xuất", font=("Arial", 12, "bold"), bg=button_bg_color, fg=text_color, command=logout, bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
         logout_btn.pack(side="left", padx=10)
     else:
         btn_frame = tk.Frame(account_frame, bg=header_bg_color)
         btn_frame.pack(side="right", padx=5)
 
-        login_btn = tk.Button(btn_frame, text="Đăng nhập", font=("Arial", 10, "bold"), 
-                               bg=button_bg_color, fg="white", command=show_login_dialog,
-                               bd=0, relief="flat", padx=10, pady=5, cursor="hand2") 
+        login_btn = tk.Button(btn_frame, text="Đăng nhập", font=("Arial", 10, "bold"), bg=button_bg_color, fg="white", command=show_login_dialog, bd=0, relief="flat", padx=10, pady=5, cursor="hand2") 
         login_btn.pack(side="left", padx=10)
 
 def toggle_menu():
     global menu_expanded, menu_items_widgets
-    # Check if menu_expanded has been initialized (it will be None if init_main_ui hasn't run)
     if menu_expanded is None:
-        return # Or handle this case appropriately, e.g., by initializing it here if needed
+        return 
 
     if menu_expanded.get():
         for widget in menu_items_widgets:
@@ -717,7 +691,6 @@ def toggle_menu():
 def on_canvas_configure(event):
     global canvas, scrollable_frame_id
     canvas.configure(scrollregion=canvas.bbox("all"))
-    # Ensure the scrollable frame expands to the canvas width
     canvas.itemconfig(scrollable_frame_id, width=event.width)
 
 def on_entry_focus_in(event):
@@ -745,7 +718,7 @@ def init_main_ui():
 
     root = tk.Tk()
     root.title("Cửa Hàng Mũ Bảo Hiểm")
-    center_window(root, 1200, 800)  
+    center_window(root, 1200, 800)
 
     # Cấu hình để cửa sổ thay đổi kích thước đúng cách
     root.grid_columnconfigure(1, weight=1)
@@ -762,10 +735,9 @@ def init_main_ui():
     if os.path.exists(logo_path):
         logo_img_orig = Image.open(logo_path)
         logo_img_resized = logo_img_orig.resize((logo_width, logo_height), Image.LANCZOS)
-        logo_photo = ImageTk.PhotoImage(logo_img_resized) # Assign to global logo_photo
+        logo_photo = ImageTk.PhotoImage(logo_img_resized)
         logo_label = tk.Label(header_frame, image=logo_photo, bg="#1A1A2E")
-        logo_label.image = logo_photo # Keep a reference!
-        # It's good practice to also store it on the root window itself to prevent GC
+        logo_label.image = logo_photo 
         root.logo_photo = logo_photo 
     else:
         logo_label = tk.Label(header_frame, text="🏍️HelmetShop", font=("Arial", 20, "bold"), bg="#1A1A2E", fg="white")
@@ -803,17 +775,13 @@ def init_main_ui():
 
     # Cập nhật giao diện đăng nhập ban đầu
     update_login_ui()
-
-    # Bind click outside to unfocus search entry
     root.bind("<Button-1>", click_outside_handler, add="+")
 
     # ===== PHẦN CÒN LẠI CỦA GIAO DIỆN =====
     left_frame = tk.Frame(root, width=200, bg="#1A1A2E")
     left_frame.pack(side="left", fill="y", pady=(0, 0))
-
-    # Initialize menu_expanded here, after root is created
     menu_expanded = tk.BooleanVar(value=False) 
-    menu_items_widgets.clear() # Clear existing widgets if re-initializing
+    menu_items_widgets.clear()
 
     menu_button = tk.Button(left_frame, text="📂 Danh mục sản phẩm", 
                             bg="#00ADB5", fg="white", 
@@ -850,7 +818,7 @@ def init_main_ui():
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Frame chứa nội dung (sản phẩm + phân trang)
+    # Frame chứa nội dung 
     content_frame = tk.Frame(scrollable_frame, bg="#232333")
     content_frame.pack(fill="both", expand=True)
 
@@ -861,10 +829,9 @@ def init_main_ui():
     if not all_products:
         messagebox.showwarning("Cảnh báo", "Không có dữ liệu sản phẩm. Vui lòng kiểm tra file products.json")
         
-    update_page() # Call to display products initially
+    update_page() 
 
     root.mainloop()
 
-# To run the program, just call init_main_ui()
 if __name__ == "__main__":
     init_main_ui()

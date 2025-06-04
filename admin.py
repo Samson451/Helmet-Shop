@@ -1,94 +1,153 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog # Import filedialog
+from tkinter import ttk, messagebox, filedialog
 import json
 from Login import center_window
-from Data_process import (
-    load_users, save_users, get_user_by_username,
-    load_products, save_products, get_product_by_id,
-    load_categories, save_categories, get_category_name_by_id,
-    load_orders, save_orders
-)
+from Data_process import load_users, save_users, load_products, save_products, load_categories, save_categories, load_orders, save_orders
 
+# Ánh xạ loại hiển thị cho danh mục sản phẩm
 LOAI_HIEN_THI = {
     1: "Nón",
     2: "Phụ kiện",
     3: "Đồ bảo hộ"
 }
 
+# Ánh xạ ngược từ tên loại sang ID
+REVERSE_LOAI_HIEN_THI = {v: k for k, v in LOAI_HIEN_THI.items()}
+
+
 class AdminDashboard:
     def __init__(self, root, current_user, on_return_callback=None):
         self.root = root
-        self.root.title("Hệ thống Quản trị - Admin Dashboard")
-        center_window(root, 1200, 800) # Center the window
+        self.root.title("Admin Dashboard")
+        center_window(root, 1200, 800)
         self.current_user = current_user
         self.on_return_callback = on_return_callback
-
-        # Apply a modern theme
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.style = ttk.Style()
-        self.style.theme_use('clam')  # 'clam', 'alt', 'default', 'classic'
+        self.style.theme_use('clam')
 
-        # Define custom styles
+        # Cấu hình styles chung cho ứng dụng
         self.style.configure('TFrame', background='#f0f2f5')
         self.style.configure('TLabel', background='#f0f2f5', font=('Arial', 10))
-        self.style.configure('TButton', font=('Arial', 10, 'bold'), padding=8, relief='flat') # Tăng padding, dùng relief='flat'
+        self.style.configure('TButton', font=('Arial', 10, 'bold'), padding=8, relief='flat')
         self.style.map('TButton', background=[('active', '#007bff'), ('!disabled', '#007bff')], foreground=[('active', 'white'), ('!disabled', 'white')])
         
         self.style.configure('Treeview.Heading', font=('Arial', 11, 'bold'), background='#007bff', foreground='white')
-        self.style.configure('Treeview', font=('Arial', 10), rowheight=28, background='white', foreground='black', fieldbackground='white') # Tăng rowheight
+        self.style.configure('Treeview', font=('Arial', 10), rowheight=28, background='white', foreground='black', fieldbackground='white')
         self.style.map('Treeview', background=[('selected', '#347083')])
 
-        self.style.configure('TNotebook', background='#f0f2f5', tabposition='wn') # Tabs bên trái
-        self.style.configure('TNotebook.Tab', background='#e0e0e0', foreground='black', padding=[15, 10], font=('Arial', 10, 'bold')) # Tăng padding, font bold
-        self.style.map('TNotebook.Tab', background=[('selected', '#007bff')], foreground=[('selected', 'white')])
+        self.style.configure('Bold.TLabel', font=('Arial', 18, 'bold'), background='#f0f2f5', foreground='#333333')
+        self.style.configure('SmallBold.TLabel', font=('Arial', 13, 'bold'), background='#f0f2f5', foreground='#333333')
+        self.style.configure('Stat.TLabel', background='#f0f2f5', foreground='#555555', font=('Arial', 10))
 
-        self.style.configure('Bold.TLabel', font=('Arial', 18, 'bold'), background='#f0f2f5', foreground='#333333') # Tăng font size
-        self.style.configure('SmallBold.TLabel', font=('Arial', 13, 'bold'), background='#f0f2f5', foreground='#333333') # Tăng font size
-        self.style.configure('Stat.TLabel', background='#f0f2f5', foreground='#555555', font=('Arial', 10)) # Thêm style cho label thống kê
+        # Cấu hình Styles cho Sidebar Menu
+        self.style.configure('Sidebar.TFrame', background='#2c3e50') 
+        self.style.configure('Sidebar.TButton', font=('Segoe UI', 11, 'bold'), foreground='white', background='#2c3e50', relief='flat', anchor='w', padding=[20, 15] 
+                             )
+        self.style.map('Sidebar.TButton', background=[('active', '#34495e'), ('!disabled', '#2c3e50')], foreground=[('active', '#f39c12'), ('!disabled', 'white')] 
+                       )
+        
+        # Style cho nút sidebar được chọn
+        self.style.configure('Sidebar.Selected.TButton', font=('Segoe UI', 11, 'bold'), foreground='#f39c12', background='#34495e', relief='flat', anchor='w', padding=[20, 15]
+                             )
+        self.style.map('Sidebar.Selected.TButton', background=[('active', '#34495e'), ('!disabled', '#34495e')]
+                       )
+        
+        # Thiết lập bố cục chính 
+        self.main_container = ttk.Frame(root, style='TFrame')
+        self.main_container.pack(fill='both', expand=True)
+        
+        self.sidebar_frame = ttk.Frame(self.main_container, width=220, style='Sidebar.TFrame')
+        self.sidebar_frame.pack(side='left', fill='y')
+        self.sidebar_frame.pack_propagate(False) 
 
+        self.content_frame = ttk.Frame(self.main_container, style='TFrame')
+        self.content_frame.pack(side='right', fill='both', expand=True, padx=10, pady=10)
 
-        # Create notebook (tab)
-        self.notebook = ttk.Notebook(root)
-        self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        # Tạo notebook (tab) 
+        self.style.layout("TNotebook.Tab", []) 
+        self.notebook = ttk.Notebook(self.content_frame)
+        self.notebook.pack(fill='both', expand=True)
 
-        # Create frames
+        # Tạo các frame cho mỗi phần quản lý
         self.dashboard_frame = ttk.Frame(self.notebook, style='TFrame')
         self.account_frame = ttk.Frame(self.notebook, style='TFrame')
         self.category_frame = ttk.Frame(self.notebook, style='TFrame')
         self.product_frame = ttk.Frame(self.notebook, style='TFrame')
         self.order_frame = ttk.Frame(self.notebook, style='TFrame')
 
-        # Add tabs
-        self.notebook.add(self.dashboard_frame, text='Tổng quan')
-        self.notebook.add(self.account_frame, text='Tài khoản')
-        self.notebook.add(self.category_frame, text='Danh mục')
-        self.notebook.add(self.product_frame, text='Sản phẩm')
-        self.notebook.add(self.order_frame, text='Đơn hàng')
+        # Thêm các frame vào notebook
+        self.notebook.add(self.dashboard_frame, text='') 
+        self.notebook.add(self.account_frame, text='')
+        self.notebook.add(self.category_frame, text='')
+        self.notebook.add(self.product_frame, text='')
+        self.notebook.add(self.order_frame, text='')
 
-        # Initialize components
+        # Danh sách các nút menu sidebar và tab hiện tại
+        self.menu_buttons = {}
+        self.current_active_tab = None
+
+        # Khu vực thông tin Admin Panel trong Sidebar
+        profile_frame = ttk.Frame(self.sidebar_frame, style='Sidebar.TFrame')
+        profile_frame.pack(pady=20, fill='x')
+        ttk.Label(profile_frame, text="ADMIN PANEL", font=('Segoe UI', 14, 'bold'),
+                  foreground='white', background='#2c3e50').pack(pady=(0, 10))
+        ttk.Label(profile_frame, text=f"Welcome, {self.current_user['username']}",
+                  font=('Segoe UI', 10), foreground='#f39c12', background='#2c3e50').pack()
+
+        # Thêm các nút điều hướng sidebar 
+        self._add_sidebar_button("Tổng quan", 0)
+        self._add_sidebar_button("Tài khoản", 1)
+        self._add_sidebar_button("Danh mục", 2)
+        self._add_sidebar_button("Sản phẩm", 3)
+        self._add_sidebar_button("Đơn hàng", 4)
+
+        # Thanh giãn cách để đẩy nút đăng xuất xuống dưới cùng
+        ttk.Frame(self.sidebar_frame, style='Sidebar.TFrame').pack(expand=True, fill='y')
+
+        # Nút Đăng xuất
+        logout_btn = ttk.Button(self.sidebar_frame, text=" Đăng xuất",
+                                style='Sidebar.TButton', command=self.logout)
+        logout_btn.pack(fill='x', pady=10)
+
+        # Chọn tab đầu tiên khi khởi tạo
+        self._on_tab_change(0)
+
+        # Khởi tạo các thành phần giao diện cho từng tab
         self.create_dashboard()
         self.create_account_management()
         self.create_category_management()
         self.create_product_management()
         self.create_order_management()
 
+    def on_closing(self):
+        if messagebox.askokcancel("Thoát", "Bạn có muốn thoát chương trình không?"):
+            self.root.destroy()
+
+    # Hàm thêm nút sidebar
+    def _add_sidebar_button(self, text, tab_index):
+        btn = ttk.Button(self.sidebar_frame, text=f" {text}",
+                         style='Sidebar.TButton',
+                         command=lambda: self._on_tab_change(tab_index))
+        btn.pack(fill='x', pady=2)
+        self.menu_buttons[tab_index] = btn
+
+    # Hàm xử lý thay đổi tab 
+    def _on_tab_change(self, tab_index):
+        # Cập nhật styles nút sidebar
+        for idx, btn in self.menu_buttons.items():
+            if idx == tab_index:
+                btn.config(style='Sidebar.Selected.TButton')
+            else:
+                btn.config(style='Sidebar.TButton')
+        
+        # Chuyển đổi tab notebook
+        self.notebook.select(tab_index)
+        self.current_active_tab = tab_index
+
+    # --- Phần quản lý Dashboard  ---
     def create_dashboard(self):
-        # Title
-        ttk.Label(self.dashboard_frame, text="BẢNG ĐIỀU KHIỂN QUẢN TRỊ",
-                  style='Bold.TLabel').pack(pady=25)
-
-        # User Info and Logout
-        user_info_frame = ttk.Frame(self.dashboard_frame, style='TFrame')
-        user_info_frame.pack(fill='x', padx=30, pady=15)
-
-        ttk.Label(user_info_frame, text=f"Xin chào: {self.current_user['username']}",
-                  font=("Arial", 13, "bold"), foreground='#0056b3').pack(side='left', padx=10)
-        ttk.Label(user_info_frame, text=f"Vai trò: Quản trị viên",
-                  font=("Arial", 13), foreground='#0056b3').pack(side='left', padx=30)
-
-        logout_btn = ttk.Button(user_info_frame, text="Đăng xuất", command=self.logout)
-        logout_btn.pack(side='right', padx=10)
-
-        # Statistics
+        # Khu vực hiển thị thống kê
         stats_frame = ttk.Frame(self.dashboard_frame, style='TFrame')
         stats_frame.pack(fill='x', padx=20, pady=20)
 
@@ -98,10 +157,10 @@ class AdminDashboard:
         order_count = len(self.load_orders())
 
         stats = [
-            ("Tài khoản", user_count, "#4e73df"),  # Blue
-            ("Sản phẩm", product_count, "#1cc88a"), # Green
-            ("Danh mục", category_count, "#36b9cc"), # Cyan
-            ("Đơn hàng", order_count, "#f6c23e")    # Yellow
+            ("Tài khoản", user_count, "#4e73df"),  
+            ("Sản phẩm", product_count, "#1cc88a"), 
+            ("Danh mục", category_count, "#36b9cc"), 
+            ("Đơn hàng", order_count, "#f6c23e")    
         ]
 
         for i, (title, count, color) in enumerate(stats):
@@ -109,7 +168,6 @@ class AdminDashboard:
             stat_card_frame.grid(row=0, column=i, padx=15, pady=10, sticky='nsew')
             stats_frame.grid_columnconfigure(i, weight=1)
 
-            # Inner frame for background color
             inner_bg_frame = tk.Frame(stat_card_frame, bg=color, bd=0)
             inner_bg_frame.pack(fill='both', expand=True, ipadx=25, ipady=15)
 
@@ -118,11 +176,12 @@ class AdminDashboard:
             ttk.Label(inner_bg_frame, text=str(count), background=color, foreground='white',
                       font=("Arial", 32, "bold")).pack(pady=(5, 8))
 
+    # --- Phần quản lý Tài khoản ---
     def create_account_management(self):
         ttk.Label(self.account_frame, text="QUẢN LÝ TÀI KHOẢN",
                   style='Bold.TLabel').pack(pady=15)
 
-        # Buttons frame at the top
+        # Khung chứa các nút hành động 
         btn_frame = ttk.Frame(self.account_frame, style='TFrame')
         btn_frame.pack(fill='x', padx=10, pady=10, side='top')
 
@@ -131,6 +190,7 @@ class AdminDashboard:
         ttk.Button(btn_frame, text="Sửa", command=self.edit_account).pack(side='left', padx=8, pady=5)
         ttk.Button(btn_frame, text="Xóa", command=self.delete_account).pack(side='left', padx=8, pady=5)
 
+        # Bảng hiển thị tài khoản
         columns = ("id", "username", "email", "type_acc")
         self.account_tree = ttk.Treeview(self.account_frame, columns=columns, show="headings")
 
@@ -152,6 +212,7 @@ class AdminDashboard:
 
         self.refresh_accounts()
 
+    # --- Phần quản lý Danh mục ---
     def create_category_management(self):
         ttk.Label(self.category_frame, text="QUẢN LÝ DANH MỤC SẢN PHẨM",
                   style='Bold.TLabel').pack(pady=15)
@@ -164,7 +225,7 @@ class AdminDashboard:
         ttk.Button(btn_frame, text="Sửa", command=self.edit_category).pack(side='left', padx=8, pady=5)
         ttk.Button(btn_frame, text="Xóa", command=self.delete_category).pack(side='left', padx=8, pady=5)
 
-
+        # Bảng hiển thị danh mục
         columns = ("type_id", "type_name", "loai")
         self.category_tree = ttk.Treeview(self.category_frame, columns=columns, show="headings")
 
@@ -184,15 +245,16 @@ class AdminDashboard:
 
         self.refresh_categories()
 
+    # --- Phần quản lý Sản phẩm ---
     def create_product_management(self):
         ttk.Label(self.product_frame, text="QUẢN LÝ SẢN PHẨM", style='Bold.TLabel').pack(pady=15)
 
-        # Search and Filter frame
+        # Khung tìm kiếm và lọc 
         filter_actions_frame = ttk.Frame(self.product_frame, style='TFrame')
         filter_actions_frame.pack(fill='x', padx=10, pady=5)
 
         search_frame = ttk.Frame(filter_actions_frame, style='TFrame')
-        search_frame.pack(side='left', padx=5, pady=5)
+        search_frame.pack(side='left', padx=5, pady=5) # Đặt khung tìm kiếm bên trái
         ttk.Label(search_frame, text="Tìm kiếm:").pack(side='left', padx=5)
         self.search_var = tk.StringVar()
         search_entry = ttk.Entry(search_frame, textvariable=self.search_var, width=30)
@@ -212,8 +274,7 @@ class AdminDashboard:
         
         ttk.Button(filter_actions_frame, text="Hiển thị tất cả", command=self.reset_product_search).pack(side='left', padx=10, pady=5)
 
-
-        # Action buttons
+        # Khung nút hành động 
         btn_frame = ttk.Frame(self.product_frame, style='TFrame')
         btn_frame.pack(fill='x', padx=10, pady=10)
         ttk.Button(btn_frame, text="Làm mới", command=self.refresh_products).pack(side='left', padx=8, pady=5)
@@ -221,7 +282,7 @@ class AdminDashboard:
         ttk.Button(btn_frame, text="Sửa", command=self.edit_product).pack(side='left', padx=8, pady=5)
         ttk.Button(btn_frame, text="Xóa", command=self.delete_product).pack(side='left', padx=8, pady=5)
 
-        # Treeview
+        # Bảng hiển thị sản phẩm
         columns = ("id", "product_name", "price", "category")
         self.product_tree = ttk.Treeview(self.product_frame, columns=columns, show="headings")
         self.product_tree.heading("id", text="ID")
@@ -252,7 +313,7 @@ class AdminDashboard:
             self.refresh_products()
             return
 
-        # Search by product name or ID
+        # Tìm kiếm theo tên sản phẩm hoặc ID
         self.current_product_list = [
             p for p in all_products
             if keyword in p.get("product_name", "").lower() or
@@ -276,7 +337,7 @@ class AdminDashboard:
                 break
 
         if not category_id:
-            self.current_product_list = [] # No matching category found
+            self.current_product_list = [] 
             self.refresh_products(self.current_product_list)
             return
 
@@ -292,6 +353,7 @@ class AdminDashboard:
         self.current_product_list = None
         self.refresh_products()
 
+    # --- Phần quản lý Đơn hàng ---
     def create_order_management(self):
         ttk.Label(self.order_frame, text="QUẢN LÝ ĐƠN HÀNG",
                   style='Bold.TLabel').pack(pady=15)
@@ -303,6 +365,7 @@ class AdminDashboard:
         ttk.Button(btn_frame, text="Xem chi tiết", command=self.view_order_details).pack(side='left', padx=8, pady=5)
         ttk.Button(btn_frame, text="Cập nhật TT", command=self.update_order_status).pack(side='left', padx=8, pady=5)
 
+        # Bảng hiển thị đơn hàng
         columns = ("id", "customer_name", "email", "total_price", "status")
         self.order_tree = ttk.Treeview(self.order_frame, columns=columns, show="headings")
 
@@ -326,7 +389,7 @@ class AdminDashboard:
 
         self.refresh_orders()
 
-    # ===== DATA HANDLING FUNCTIONS (UNCHANGED) =====
+    # ===== HÀM XỬ LÝ DỮ LIỆU =====
     def load_accounts(self):
         return list(load_users().values())
 
@@ -351,7 +414,7 @@ class AdminDashboard:
     def save_orders(self, orders):
         save_orders(orders)
 
-    # ===== REFRESH FUNCTIONS =====
+    # ===== HÀM LÀM MỚI DỮ LIỆU TRÊN CÁC BẢNG =====
     def refresh_accounts(self):
         for item in self.account_tree.get_children():
             self.account_tree.delete(item)
@@ -376,7 +439,7 @@ class AdminDashboard:
                 cat["type_name"],
                 loai_str
             ))
-        # Update category filter for product management as well
+        # Cập nhật bộ lọc danh mục cho phần quản lý sản phẩm
         categories_for_filter = ["Tất cả"] + [cat["type_name"] for cat in self.load_categories()]
         if hasattr(self, 'category_filter_combobox'):
              self.category_filter_combobox['values'] = categories_for_filter
@@ -425,7 +488,7 @@ class AdminDashboard:
                 order["status"]
         ))
 
-    # ===== ACCOUNT MANAGEMENT FUNCTIONS =====
+    # ===== HÀM QUẢN LÝ TÀI KHOẢN =====
     def add_account(self):
         add_window = tk.Toplevel(self.root)
         add_window.title("Thêm tài khoản mới")
@@ -586,7 +649,7 @@ class AdminDashboard:
         messagebox.showinfo("Thành công", "Đã xóa tài khoản")
         self.refresh_accounts()
 
-    # ===== CATEGORY MANAGEMENT FUNCTIONS =====
+    # ===== HÀM QUẢN LÝ DANH MỤC =====
     def add_category(self):
         add_window = tk.Toplevel(self.root)
         add_window.title("Thêm danh mục mới")
@@ -605,21 +668,26 @@ class AdminDashboard:
         name_entry = ttk.Entry(input_frame, width=35)
         name_entry.grid(row=0, column=1, padx=10, pady=8, sticky='ew')
 
-        ttk.Label(input_frame, text="Loại (1-3):", style='TLabel').grid(row=1, column=0, padx=10, pady=8, sticky='w')
-        type_var = tk.StringVar(value="1")
-        type_combobox = ttk.Combobox(input_frame, textvariable=type_var,
-                                    values=["1", "2", "3"], state="readonly", width=32)
+        ttk.Label(input_frame, text="Loại:", style='TLabel').grid(row=1, column=0, padx=10, pady=8, sticky='w')
+        type_var = tk.StringVar(value=LOAI_HIEN_THI.get(1)) 
+        type_combobox = ttk.Combobox(input_frame, textvariable=type_var, values=list(LOAI_HIEN_THI.values()), state="readonly", width=32)
         type_combobox.grid(row=1, column=1, padx=10, pady=8, sticky='w')
 
         input_frame.grid_columnconfigure(1, weight=1)
 
         def save_category():
             name = name_entry.get().strip()
-            loai = type_var.get()
+            selected_loai_name = type_var.get()
+            
+            loai_id = REVERSE_LOAI_HIEN_THI.get(selected_loai_name)
 
             if not name:
                 messagebox.showerror("Lỗi", "Vui lòng nhập tên danh mục", parent=add_window)
                 return
+            if loai_id is None:
+                messagebox.showerror("Lỗi", "Vui lòng chọn loại danh mục hợp lệ", parent=add_window)
+                return
+
 
             categories = self.load_categories()
 
@@ -632,7 +700,7 @@ class AdminDashboard:
             new_category = {
                 "type_id": new_id,
                 "type_name": name,
-                "loai": int(loai)
+                "loai": loai_id
             }
 
             categories.append(new_category)
@@ -640,7 +708,7 @@ class AdminDashboard:
             messagebox.showinfo("Thành công", "Thêm danh mục thành công", parent=add_window)
             add_window.destroy()
             self.refresh_categories()
-            self.refresh_products() # To update category filter in product tab
+            self.refresh_products()
 
         ttk.Button(main_frame, text="Lưu danh mục", width=20, command=save_category
                 ).pack(pady=20, anchor='center')
@@ -679,23 +747,32 @@ class AdminDashboard:
         name_entry.insert(0, category["type_name"])
         name_entry.grid(row=0, column=1, padx=10, pady=8, sticky='ew')
 
-        ttk.Label(input_frame, text="Loại (1-3):", style='TLabel').grid(row=1, column=0, padx=10, pady=8, sticky='w')
-        type_var = tk.StringVar(value=str(category["loai"]))
-        type_combobox = ttk.Combobox(input_frame, textvariable=type_var,
-                                    values=["1", "2", "3"], state="readonly", width=32)
+        ttk.Label(input_frame, text="Loại:", style='TLabel').grid(row=1, column=0, padx=10, pady=8, sticky='w')
+        current_loai_name = LOAI_HIEN_THI.get(category["loai"], "Không rõ")
+        type_var = tk.StringVar(value=current_loai_name)
+        type_combobox = ttk.Combobox(input_frame, textvariable=type_var, values=list(LOAI_HIEN_THI.values()), state="readonly", width=32)
         type_combobox.grid(row=1, column=1, padx=10, pady=8, sticky='w')
         
         input_frame.grid_columnconfigure(1, weight=1)
 
         def update_category():
-            category["type_name"] = name_entry.get().strip()
-            category["loai"] = int(type_var.get())
+            category_name_updated = name_entry.get().strip()
+            selected_loai_name = type_var.get()
+            
+            loai_id_updated = REVERSE_LOAI_HIEN_THI.get(selected_loai_name)
+
+            if loai_id_updated is None:
+                messagebox.showerror("Lỗi", "Vui lòng chọn loại danh mục hợp lệ", parent=edit_window)
+                return
+
+            category["type_name"] = category_name_updated
+            category["loai"] = loai_id_updated 
 
             self.save_categories(categories)
             messagebox.showinfo("Thành công", "Cập nhật danh mục thành công", parent=edit_window)
             edit_window.destroy()
             self.refresh_categories()
-            self.refresh_products() # To update category filter in product tab
+            self.refresh_products() 
 
         ttk.Button(main_frame, text="Lưu thay đổi", width=20, command=update_category
                 ).pack(pady=20, anchor='center')
@@ -724,13 +801,13 @@ class AdminDashboard:
         self.save_categories(categories)
         messagebox.showinfo("Thành công", "Đã xóa danh mục")
         self.refresh_categories()
-        self.refresh_products() # To update category filter in product tab
+        self.refresh_products() 
 
-    # ===== PRODUCT MANAGEMENT FUNCTIONS =====
+    # ===== HÀM QUẢN LÝ SẢN PHẨM =====
     def add_product(self):
         add_window = tk.Toplevel(self.root)
         add_window.title("Thêm sản phẩm mới")
-        add_window.geometry("550x500") # Tăng chiều cao để chứa gallery
+        add_window.geometry("550x500") 
         center_window(add_window, 550, 500)
         add_window.transient(self.root)
         add_window.grab_set()
@@ -765,13 +842,13 @@ class AdminDashboard:
             category_combobox.set(category_names[0])
         category_combobox.grid(row=3, column=1, padx=10, pady=8, sticky='w')
 
-        # Main Image Selection
+        # Chọn ảnh chính
         ttk.Label(input_frame, text="Ảnh chính:", style='TLabel').grid(row=4, column=0, padx=10, pady=8, sticky='w')
         
         main_image_selection_frame = ttk.Frame(input_frame, style='TFrame')
         main_image_selection_frame.grid(row=4, column=1, padx=10, pady=8, sticky='ew')
         
-        self.selected_main_image_path = tk.StringVar() # Biến cho ảnh chính
+        self.selected_main_image_path = tk.StringVar() 
         main_image_status_label = ttk.Label(main_image_selection_frame, textvariable=self.selected_main_image_path, style='TLabel', foreground='gray')
         main_image_status_label.pack(side='left', fill='x', expand=True, padx=(0, 5))
         
@@ -782,7 +859,7 @@ class AdminDashboard:
             )
             if file_path:
                 self.selected_main_image_path.set("1 ảnh đã chọn")
-                self.current_main_image_path = file_path # Lưu đường dẫn thực tế
+                self.current_main_image_path = file_path 
             else:
                 self.selected_main_image_path.set("Chưa có ảnh nào")
                 self.current_main_image_path = ""
@@ -791,9 +868,9 @@ class AdminDashboard:
         select_main_image_btn.pack(side='right')
         
         self.selected_main_image_path.set("Chưa có ảnh nào")
-        self.current_main_image_path = "" # Khởi tạo biến lưu đường dẫn ảnh chính
+        self.current_main_image_path = "" 
 
-        # Gallery Images Selection
+        # Chọn ảnh Gallery
         ttk.Label(input_frame, text="Ảnh Gallery:", style='TLabel').grid(row=5, column=0, padx=10, pady=8, sticky='w')
         
         gallery_selection_frame = ttk.Frame(input_frame, style='TFrame')
@@ -823,7 +900,6 @@ class AdminDashboard:
         self.selected_gallery_image_count.set("Chưa có ảnh nào")
         self.current_gallery_image_paths = [] 
 
-
         input_frame.grid_columnconfigure(1, weight=1)
 
         def save_product():
@@ -831,8 +907,8 @@ class AdminDashboard:
             price = price_entry.get().strip()
             desc = desc_text.get("1.0", "end-1c").strip()
             category_name = category_var.get()
-            main_image_path = self.current_main_image_path # Lấy đường dẫn ảnh chính
-            gallery_image_paths = self.current_gallery_image_paths # Lấy danh sách đường dẫn gallery
+            main_image_path = self.current_main_image_path 
+            gallery_image_paths = self.current_gallery_image_paths 
 
             if not name or not price:
                 messagebox.showerror("Lỗi", "Vui lòng nhập tên sản phẩm và giá", parent=add_window)
@@ -859,7 +935,7 @@ class AdminDashboard:
                 "description": desc,
                 "type_id": category_id,
                 "main_image": main_image_path,
-                "gallery_images": gallery_image_paths # Lưu danh sách ảnh gallery
+                "gallery_images": gallery_image_paths 
             }
 
             products.append(new_product)
@@ -867,9 +943,7 @@ class AdminDashboard:
             messagebox.showinfo("Thành công", "Thêm sản phẩm thành công", parent=add_window)
             add_window.destroy()
             self.refresh_products()
-
-        ttk.Button(main_frame, text="Lưu sản phẩm", width=20, command=save_product
-                ).pack(pady=20, anchor='center')
+        ttk.Button(main_frame, text="Lưu sản phẩm", width=20, command=save_product).pack(pady=20, anchor='center')
 
     def edit_product(self):
         selected = self.product_tree.selection()
@@ -889,7 +963,7 @@ class AdminDashboard:
 
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Chỉnh sửa sản phẩm")
-        edit_window.geometry("550x500") # Tăng chiều cao
+        edit_window.geometry("550x500") 
         center_window(edit_window, 550, 500)
         edit_window.transient(self.root)
         edit_window.grab_set()
@@ -928,17 +1002,17 @@ class AdminDashboard:
                                         values=category_names, state="readonly", width=37)
         category_combobox.grid(row=3, column=1, padx=10, pady=8, sticky='w')
 
-        # Main Image Selection
+        # Chọn ảnh chính
         ttk.Label(input_frame, text="Ảnh chính:", style='TLabel').grid(row=4, column=0, padx=10, pady=8, sticky='w')
         
         main_image_selection_frame = ttk.Frame(input_frame, style='TFrame')
         main_image_selection_frame.grid(row=4, column=1, padx=10, pady=8, sticky='ew')
         
-        self.selected_main_image_path = tk.StringVar() # Biến cho ảnh chính
+        self.selected_main_image_path = tk.StringVar() 
         main_image_status_label = ttk.Label(main_image_selection_frame, textvariable=self.selected_main_image_path, style='TLabel', foreground='gray')
         main_image_status_label.pack(side='left', fill='x', expand=True, padx=(0, 5))
         
-        self.current_main_image_path = product.get("main_image", "") # Khởi tạo với ảnh hiện có
+        self.current_main_image_path = product.get("main_image", "") 
         if self.current_main_image_path:
             self.selected_main_image_path.set("1 ảnh đã chọn")
         else:
@@ -953,49 +1027,42 @@ class AdminDashboard:
                 self.selected_main_image_path.set("1 ảnh đã chọn")
                 self.current_main_image_path = file_path 
             else:
-                # Nếu người dùng hủy chọn, giữ nguyên đường dẫn cũ hoặc xóa nếu không có
-                # current_main_image_path vẫn giữ giá trị cũ nếu không chọn gì mới
-                if not self.current_main_image_path: # Nếu ban đầu không có ảnh và hủy chọn
+                if not self.current_main_image_path: 
                      self.selected_main_image_path.set("Chưa có ảnh nào")
-
 
         select_main_image_btn = ttk.Button(main_image_selection_frame, text="Chọn ảnh", command=select_main_image)
         select_main_image_btn.pack(side='right')
 
-        # Gallery Images Selection
+        # Chọn ảnh Gallery
         ttk.Label(input_frame, text="Ảnh Gallery:", style='TLabel').grid(row=5, column=0, padx=10, pady=8, sticky='w')
         
         gallery_selection_frame = ttk.Frame(input_frame, style='TFrame')
         gallery_selection_frame.grid(row=5, column=1, padx=10, pady=8, sticky='ew')
         
-        self.selected_gallery_image_count = tk.StringVar() # Biến cho số lượng ảnh gallery
+        self.selected_gallery_image_count = tk.StringVar() 
         gallery_status_label = ttk.Label(gallery_selection_frame, textvariable=self.selected_gallery_image_count, style='TLabel', foreground='gray')
         gallery_status_label.pack(side='left', fill='x', expand=True, padx=(0, 5))
         
-        self.current_gallery_image_paths = product.get("gallery_images", []) # Khởi tạo với ảnh gallery hiện có
+        self.current_gallery_image_paths = product.get("gallery_images", []) 
         if self.current_gallery_image_paths:
             self.selected_gallery_image_count.set(f"{len(self.current_gallery_image_paths)} ảnh đã chọn")
         else:
             self.selected_gallery_image_count.set("Chưa có ảnh nào")
 
         def select_gallery_images():
-            file_paths = filedialog.askopenfilenames( # <--- Đã sửa: askopenfilenames (có 's')
+            file_paths = filedialog.askopenfilenames( 
                 title="Chọn ảnh Gallery",
                 filetypes=(("Image files", "*.jpg *.jpeg *.png *.gif"), ("All files", "*.*"))
             )
             if file_paths:
-                self.current_gallery_image_paths = list(file_paths) # <--- file_paths đã là tuple, chuyển thành list
+                self.current_gallery_image_paths = list(file_paths) 
                 self.selected_gallery_image_count.set(f"{len(file_paths)} ảnh đã chọn")
             else:
-                # Nếu người dùng hủy chọn, giữ nguyên danh sách cũ hoặc xóa nếu không có
-                # current_gallery_image_paths vẫn giữ giá trị cũ nếu không chọn gì mới
-                if not self.current_gallery_image_paths: # Nếu ban đầu không có ảnh và hủy chọn
+                if not self.current_gallery_image_paths: 
                     self.selected_gallery_image_count.set("Chưa có ảnh nào")
-
 
         select_gallery_btn = ttk.Button(gallery_selection_frame, text="Chọn ảnh", command=select_gallery_images)
         select_gallery_btn.pack(side='right')
-
 
         input_frame.grid_columnconfigure(1, weight=1)
 
@@ -1014,8 +1081,8 @@ class AdminDashboard:
             product["price"] = price_entry.get().strip()
             product["description"] = desc_text.get("1.0", "end-1c").strip()
             product["type_id"] = category_id
-            product["main_image"] = self.current_main_image_path # Lấy từ biến đã lưu
-            product["gallery_images"] = self.current_gallery_image_paths # Lưu danh sách ảnh gallery
+            product["main_image"] = self.current_main_image_path 
+            product["gallery_images"] = self.current_gallery_image_paths 
 
             self.save_products(products)
             messagebox.showinfo("Thành công", "Cập nhật sản phẩm thành công", parent=edit_window)
@@ -1045,7 +1112,7 @@ class AdminDashboard:
         messagebox.showinfo("Thành công", "Đã xóa sản phẩm")
         self.refresh_products()
 
-    # ===== ORDER MANAGEMENT FUNCTIONS =====
+    # ===== HÀM QUẢN LÝ ĐƠN HÀNG =====
     def view_order_details(self):
         selected = self.order_tree.selection()
         if not selected:
@@ -1072,11 +1139,11 @@ class AdminDashboard:
         main_frame = ttk.Frame(detail_window, padding="20", style='TFrame')
         main_frame.pack(fill='both', expand=True)
 
-        # General Info
+        # Thông tin chung về đơn hàng
         info_frame = ttk.LabelFrame(main_frame, text="Thông tin đơn hàng", padding="15", style='TFrame')
         info_frame.pack(fill='x', padx=10, pady=10)
 
-        # Using grid for better alignment in info_frame
+        # Sử dụng grid để căn chỉnh tốt hơn
         ttk.Label(info_frame, text="Mã đơn hàng:", style='TLabel').grid(row=0, column=0, sticky='w', padx=5, pady=5)
         ttk.Label(info_frame, text=order['id'], font=("Arial", 10, "bold")).grid(row=0, column=1, sticky='w', padx=5, pady=5)
 
@@ -1095,7 +1162,7 @@ class AdminDashboard:
         info_frame.grid_columnconfigure(1, weight=1)
         info_frame.grid_columnconfigure(3, weight=1)
 
-        # Product List
+        # Danh sách sản phẩm trong đơn hàng
         products_frame = ttk.LabelFrame(main_frame, text="Sản phẩm đã đặt", padding="15", style='TFrame')
         products_frame.pack(fill='both', expand=True, padx=10, pady=10)
 
@@ -1188,19 +1255,13 @@ class AdminDashboard:
 
         ttk.Button(main_frame, text="Lưu thay đổi", command=save_status, width=18).pack(pady=20)
 
+    # Hàm đăng xuất
     def logout(self):
-        """Đăng xuất và quay lại giao diện chính"""
         if self.on_return_callback:
             self.on_return_callback()
         self.root.destroy()
 
-    type_map = {
-    1: "Nón",
-    2: "Phụ kiện",
-    3: "Đồ bảo hộ"
-    }
-    reverse_type_map = {v: k for k, v in type_map.items()}
-
+# Hàm hiển thị bảng điều khiển admin
 def show_admin_panel(current_user, on_return_callback=None):
     root = tk.Toplevel()
     app = AdminDashboard(root, current_user, on_return_callback)
