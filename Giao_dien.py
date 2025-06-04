@@ -676,7 +676,7 @@ def update_login_ui():
 
         tk.Label(user_frame, text=f"👤 {current_user['username']}", font=("Arial", 12), bg=header_bg_color, fg=text_color).pack(side="left")
 
-        logout_btn = tk.Button(user_frame, text="Đăng xuất", font=("Arial", 12, "bold"), bg=button_bg_color, fg=text_color, command=logout, bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
+        logout_btn = tk.Button(user_frame, text="Đăng xuất", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=logout, bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
         logout_btn.pack(side="left", padx=10)
     else:
         btn_frame = tk.Frame(account_frame, bg=header_bg_color)
@@ -780,9 +780,7 @@ def init_main_ui():
     account_frame = tk.Frame(account_cart_frame, bg="#1A1A2E")
     account_frame.pack(side="left", padx=10)
 
-    cart_button = tk.Button(account_cart_frame, text=" Giỏ hàng", font=("Arial", 10, "bold"),
-                            bg="#3C3C58", fg="white", command=show_cart,
-                            bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
+    cart_button = tk.Button(account_cart_frame, text=" Giỏ hàng", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=show_cart, bd=0, relief="flat", padx=10, pady=5, cursor="hand2")
     cart_button.pack(side="left", padx=10)
 
     # Cập nhật giao diện đăng nhập ban đầu
