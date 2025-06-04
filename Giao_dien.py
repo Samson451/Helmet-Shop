@@ -1,6 +1,6 @@
 import tkinter as tk
 import json
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 from PIL import Image, ImageTk
 import os
 import datetime
@@ -79,6 +79,7 @@ def show_product_popup(product):
     popup = tk.Toplevel()
     popup.title("Chi Tiết Sản Phẩm")
     center_window(popup, 800, 550)
+    popup.iconbitmap("images\Logo\Logo.ico")
     popup.resizable(False, False)
     popup.configure(bg="#232333")
 
@@ -425,6 +426,7 @@ def show_cart():
     cart_window = tk.Toplevel(root)
     cart_window.title("Giỏ Hàng")
     center_window(cart_window, 700, 450) 
+    cart_window.iconbitmap("images\Logo\Logo.ico")
     cart_window.resizable(False, False)
     cart_window.configure(bg="#232333") 
 
@@ -719,6 +721,7 @@ def init_main_ui():
     root = tk.Tk()
     root.title("Cửa Hàng Mũ Bảo Hiểm")
     center_window(root, 1200, 800)
+    root.iconbitmap("images\Logo\Logo.ico")
 
     # Cấu hình để cửa sổ thay đổi kích thước đúng cách
     root.grid_columnconfigure(1, weight=1)

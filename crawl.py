@@ -114,7 +114,7 @@ def get_total_pages(soup):
     
     return max_page
 
-def scrape_category(category, crawled_urls,  product_id):
+def scrape_category(category, crawled_urls):
     """Thu thập sản phẩm từ một danh mục, kiểm tra trùng lặp"""
     print(f"\n📂 Đang xử lý danh mục: {category['type_name']}")
     products = []
@@ -181,7 +181,7 @@ def scrape_category(category, crawled_urls,  product_id):
     print(f"✅ Hoàn thành danh mục: {len(products)} sản phẩm")
     return products
 
-def scrape_product(product_url, category):
+def scrape_product(product_url, category, product_id):
     """Thu thập chi tiết sản phẩm"""
     soup = get_soup(product_url)
     if not soup:

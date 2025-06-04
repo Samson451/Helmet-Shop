@@ -20,6 +20,7 @@ class AdminDashboard:
         self.root = root
         self.root.title("Admin Dashboard")
         center_window(root, 1200, 800)
+        self.root.iconbitmap("images\Logo\Logo.ico")
         self.current_user = current_user
         self.on_return_callback = on_return_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -494,6 +495,7 @@ class AdminDashboard:
         add_window.title("Thêm tài khoản mới")
         add_window.geometry("450x320")
         center_window(add_window, 450, 320)
+        add_window.iconbitmap("images\Logo\Logo.ico")
         add_window.transient(self.root)
         add_window.grab_set()
 
@@ -579,6 +581,7 @@ class AdminDashboard:
         edit_window.title("Chỉnh sửa tài khoản")
         edit_window.geometry("450x320")
         center_window(edit_window, 450, 320)
+        edit_window.iconbitmap("images\Logo\Logo.ico")
         edit_window.transient(self.root)
         edit_window.grab_set()
 
@@ -655,6 +658,7 @@ class AdminDashboard:
         add_window.title("Thêm danh mục mới")
         add_window.geometry("450x280")
         center_window(add_window, 450, 280)
+        add_window.iconbitmap("images\Logo\Logo.ico")
         add_window.transient(self.root)
         add_window.grab_set()
 
@@ -733,6 +737,7 @@ class AdminDashboard:
         edit_window.title("Chỉnh sửa danh mục")
         edit_window.geometry("450x280")
         center_window(edit_window, 450, 280)
+        edit_window.iconbitmap("images\Logo\Logo.ico")
         edit_window.transient(self.root)
         edit_window.grab_set()
 
@@ -809,6 +814,7 @@ class AdminDashboard:
         add_window.title("Thêm sản phẩm mới")
         add_window.geometry("550x500") 
         center_window(add_window, 550, 500)
+        add_window.iconbitmap("images\Logo\Logo.ico")
         add_window.transient(self.root)
         add_window.grab_set()
 
@@ -965,6 +971,7 @@ class AdminDashboard:
         edit_window.title("Chỉnh sửa sản phẩm")
         edit_window.geometry("550x500") 
         center_window(edit_window, 550, 500)
+        edit_window.iconbitmap("images\Logo\Logo.ico")
         edit_window.transient(self.root)
         edit_window.grab_set()
 
@@ -1133,6 +1140,7 @@ class AdminDashboard:
         detail_window.title(f"Chi tiết đơn hàng #{order_id}")
         detail_window.geometry("700x550")
         center_window(detail_window, 700, 550)
+        detail_window.iconbitmap("images\Logo\Logo.ico")
         detail_window.transient(self.root)
         detail_window.grab_set()
 
@@ -1232,6 +1240,7 @@ class AdminDashboard:
         status_window.title("Cập nhật trạng thái đơn hàng")
         status_window.geometry("350x220")
         center_window(status_window, 350, 220)
+        status_window.iconbitmap("images\Logo\Logo.ico")
         status_window.transient(self.root)
         status_window.grab_set()
 
