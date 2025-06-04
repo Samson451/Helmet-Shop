@@ -177,13 +177,22 @@ def show_product_popup(product):
     description_text.config(state="disabled")
     description_text.pack(anchor="w", fill="x", pady=(0, 10))
 
+    quantity_frame = tk.Frame(details_frame, bg="#232333")
+    quantity_frame.pack(anchor="w", pady=(0, 15))
+
+    tk.Label(quantity_frame, text="Số lượng:", font=("Arial", 10), bg="#232333", fg="white").pack(side="left", padx=(0, 5))
+
+    quantity_var = tk.IntVar(value=0) # <--- Thay đổi giá trị mặc định là 0
+    quantity_spinbox = ttk.Spinbox(quantity_frame, from_=0, to=99, textvariable=quantity_var, width=5, font=("Arial", 10)) # <--- from_=0
+    quantity_spinbox.pack(side="left")
+
     button_frame = tk.Frame(details_frame, bg="#232333")
     button_frame.pack(pady=20)
 
-    add_to_cart_btn = tk.Button(button_frame, text="Thêm vào giỏ hàng", font=("Arial", 10, "bold"), bg="#00ADB5", fg="white", command=lambda: add_to_cart(product.get("id")), bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
+    add_to_cart_btn = tk.Button(button_frame, text="Thêm vào giỏ hàng", font=("Arial", 10, "bold"), bg="#00ADB5", fg="white",command=lambda: add_to_cart_with_quantity(product.get("id"), quantity_var.get()), bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
     add_to_cart_btn.pack(side="left", padx=10)
 
-    close_btn = tk.Button(button_frame, text="Đóng", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=popup.destroy,  bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
+    close_btn = tk.Button(button_frame, text="Đóng", font=("Arial", 10, "bold"), bg="#3C3C58", fg="white", command=popup.destroy, bd=0, relief="flat", padx=15, pady=8, cursor="hand2")
     close_btn.pack(side="left", padx=10)
 
     popup.grab_set() 
