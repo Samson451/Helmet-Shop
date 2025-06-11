@@ -209,6 +209,24 @@ def show_product_popup(product):
     popup.transient(root) 
     root.wait_window(popup)
 
+def on_mouse_wheel(event):
+
+    if event.delta:
+        canvas.yview_scroll(-1 * (event.delta // 120), "units")
+    elif event.num == 4:
+        canvas.yview_scroll(-1, "units")
+    elif event.num == 5:
+        canvas.yview_scroll(1, "units")
+
+def bind_mouse_wheel_to_children(widget):
+
+    widget.bind("<MouseWheel>", on_mouse_wheel) 
+    widget.bind("<Button-4>", on_mouse_wheel) 
+    widget.bind("<Button-5>", on_mouse_wheel) 
+
+    for child in widget.winfo_children():
+        bind_mouse_wheel_to_children(child)
+
 def add_to_cart_with_quantity(product_id, quantity):
     global current_user
 
@@ -323,6 +341,10 @@ def display_products(product_list):
             products_frame.grid_columnconfigure(i, weight=1)
         
         show_pagination(product_list)
+    canvas.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
+    canvas.yview_moveto(0)
+    bind_mouse_wheel_to_children(products_frame)
 
 def show_pagination(product_list):
     pagination_container_bg = "#232333" 
@@ -898,8 +920,8 @@ def init_main_ui():
     if not all_products:
         messagebox.showwarning("Cảnh báo", "Không có dữ liệu sản phẩm. Vui lòng kiểm tra file products.json")
         
-    update_page() 
-
+    update_page()
+    
     root.mainloop()
 
 if __name__ == "__main__":

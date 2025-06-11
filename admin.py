@@ -6,7 +6,7 @@ from Data_process import load_users, save_users, load_products, save_products, l
 import crawl 
 import os 
 import threading
-import time
+from PIL import Image, ImageTk
 
 # Ánh xạ loại hiển thị cho danh mục sản phẩm
 LOAI_HIEN_THI = {
@@ -33,7 +33,7 @@ class AdminDashboard:
 
         # Cấu hình styles chung cho ứng dụng
         self.style.configure('TFrame', background='#f0f2f5')
-        self.style.configure('TLabel', background='#f0f2f5', font=('Arial', 10))
+        self.style.configure('TLabel', background='#f0f2f5', foreground='#333333', font=('Arial', 10)) # Thêm foreground cho TLabel
         self.style.configure('TButton', font=('Arial', 10, 'bold'), padding=8, relief='flat')
         self.style.map('TButton', background=[('active', '#007bff'), ('!disabled', '#007bff')], foreground=[('active', 'white'), ('!disabled', 'white')])
         
@@ -57,6 +57,11 @@ class AdminDashboard:
                              )
         self.style.map('Sidebar.Selected.TButton', background=[('active', '#34495e'), ('!disabled', '#34495e')]
                         )
+        
+        self.style.configure('OverviewCard.TFrame', background='#ffffff',  relief='flat',borderwidth=0,)
+        self.style.configure('OverviewCard.TLabel',background='#ffffff', foreground='#333333',font=('Arial', 11))
+        self.style.configure('CardTitle.OverviewCard.TLabel', font=('Arial', 11, 'bold'), foreground='#606060') 
+        self.style.configure('CardValue.OverviewCard.TLabel', font=('Arial', 18, 'bold'), foreground='#333333')
         
         # Thiết lập bố cục chính 
         self.main_container = ttk.Frame(root, style='TFrame')
@@ -131,6 +136,37 @@ class AdminDashboard:
 
         self.crawling_thread = None  
         self.progress_update_job = None 
+
+    def create_info_card(self, parent, title, value, icon_path=None):
+        card_frame = ttk.Frame(parent, style='OverviewCard.TFrame', padding=20)
+
+        card_frame.grid_columnconfigure(0, weight=1) # Cột cho tiêu đề và giá trị
+
+        title_label = ttk.Label(card_frame, text=title, style='CardTitle.OverviewCard.TLabel')
+        title_label.grid(row=0, column=0, sticky='w', pady=(0, 5))
+
+        # Giá trị
+        value_label = ttk.Label(card_frame, text=value, style='CardValue.OverviewCard.TLabel')
+        value_label.grid(row=1, column=0, sticky='w', pady=(5, 0))
+
+        if icon_path and os.path.exists(icon_path):
+            try:
+                icon_size = 40 
+               
+                icon_img = Image.open(icon_path).resize((icon_size, icon_size), Image.LANCZOS)
+                icon_photo = ImageTk.PhotoImage(icon_img)
+               
+                icon_label = tk.Label(card_frame, image=icon_photo, bg='#ffffff') 
+                icon_label.image = icon_photo 
+                icon_label.grid(row=0, column=1, rowspan=2, sticky='e', padx=(10,0))
+                card_frame.grid_columnconfigure(1, weight=0) 
+            except Exception as e:
+                print(f"Lỗi tải icon {icon_path}: {e}")
+                card_frame.grid_columnconfigure(1, weight=1) 
+        else:
+            card_frame.grid_columnconfigure(1, weight=1) 
+
+        return card_frame
 
     # === NEW: Data Crawl Tab ===
     def create_data_crawl(self):  
@@ -235,34 +271,73 @@ class AdminDashboard:
 
     # --- Phần quản lý Dashboard  ---
     def create_dashboard(self):
-        # Khu vực hiển thị thống kê
-        stats_frame = ttk.Frame(self.dashboard_frame, style='TFrame')
-        stats_frame.pack(fill='x', padx=20, pady=20)
+        # Đảm bảo dashboard_frame được làm sạch mỗi khi hàm này được gọi
+        for widget in self.dashboard_frame.winfo_children():
+            widget.destroy()
 
-        user_count = len(self.load_accounts())
-        product_count = len(self.load_products())
-        category_count = len(self.load_categories())
-        order_count = len(self.load_orders())
+        # Load dữ liệu mới nhất
+        self.products = load_products()
+        self.users_data = load_users() # Lưu ý: load_users trả về dict {username: user_obj}
+        self.orders = load_orders()
 
-        stats = [
-            ("Tài khoản", user_count, "#4e73df"),  
-            ("Sản phẩm", product_count, "#1cc88a"), 
-            ("Danh mục", category_count, "#36b9cc"), 
-            ("Đơn hàng", order_count, "#f6c23e")    
-        ]
+        total_products = len(self.products)
+        # Giả sử bạn không muốn tính admin trong tổng số người dùng
+        total_users = len([u for u in self.users_data.values() if u.get('role') != 'admin']) 
+        total_orders = len(self.orders)
+        
+        # Tính tổng doanh thu từ các đơn hàng đã giao
+        total_revenue = 0
+        for order in self.orders:
+            if order.get('status') == 'delivered': # Chỉ tính các đơn hàng đã giao thành công
+                # Lấy trực tiếp tổng tiền từ trường 'total_price' của đơn hàng
+                total_revenue += order.get('total_price', 0)
 
-        for i, (title, count, color) in enumerate(stats):
-            stat_card_frame = ttk.Frame(stats_frame, style='TFrame', relief='raised', borderwidth=1)
-            stat_card_frame.grid(row=0, column=i, padx=15, pady=10, sticky='nsew')
-            stats_frame.grid_columnconfigure(i, weight=1)
+        # === Tạo và sắp xếp các card thông tin ===
+        overview_grid_frame = ttk.Frame(self.dashboard_frame, style='TFrame')
+        overview_grid_frame.pack(fill='both', expand=True, padx=20, pady=20)
 
-            inner_bg_frame = tk.Frame(stat_card_frame, bg=color, bd=0)
-            inner_bg_frame.pack(fill='both', expand=True, ipadx=25, ipady=15)
+        # Cấu hình grid cho khung chứa các card
+        # Ví dụ: 2 cột
+        overview_grid_frame.grid_columnconfigure(0, weight=1)
+        overview_grid_frame.grid_columnconfigure(1, weight=1)
+        # Có thể thêm cột nếu muốn 3 hoặc 4 cột, ví dụ: overview_grid_frame.grid_columnconfigure(2, weight=1)
 
-            ttk.Label(inner_bg_frame, text=title, background=color, foreground='white',
-                      font=("Arial", 12, "bold")).pack(pady=(8, 5))
-            ttk.Label(inner_bg_frame, text=str(count), background=color, foreground='white',
-                      font=("Arial", 32, "bold")).pack(pady=(5, 8))
+        # Row spacing
+        overview_grid_frame.grid_rowconfigure(0, weight=1)
+        overview_grid_frame.grid_rowconfigure(1, weight=1)
+        # Có thể thêm dòng nếu có nhiều card hơn
+
+        # Card Tổng số sản phẩm
+        card_products = self.create_info_card(overview_grid_frame,
+                                              "Tổng Số Sản Phẩm",
+                                              f"{total_products}",
+                                              # Đổi đường dẫn này thành đường dẫn thật của icon bạn có
+                                              icon_path="images/icons/product_icon.png") 
+        card_products.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
+
+        # Card Tổng số người dùng
+        card_users = self.create_info_card(overview_grid_frame,
+                                           "Tổng Số Người Dùng",
+                                           f"{total_users}",
+                                           # Đổi đường dẫn này thành đường dẫn thật của icon bạn có
+                                           icon_path="images/icons/user_icon.png") 
+        card_users.grid(row=0, column=1, padx=10, pady=10, sticky='nsew')
+
+        # Card Tổng số đơn hàng
+        card_orders = self.create_info_card(overview_grid_frame,
+                                            "Tổng Số Đơn Hàng",
+                                            f"{total_orders}",
+                                            # Đổi đường dẫn này thành đường dẫn thật của icon bạn có
+                                            icon_path="images/icons/order_icon.png") 
+        card_orders.grid(row=1, column=0, padx=10, pady=10, sticky='nsew') 
+
+        # Card Tổng doanh thu
+        card_revenue = self.create_info_card(overview_grid_frame,
+                                             "Tổng Doanh Thu",
+                                             f"{total_revenue:,.0f} VNĐ",
+                                             # Đổi đường dẫn này thành đường dẫn thật của icon bạn có
+                                             icon_path="images/icons/revenue_icon.png") 
+        card_revenue.grid(row=1, column=1, padx=10, pady=10, sticky='nsew')
 
     # --- Phần quản lý Tài khoản ---
     def create_account_management(self):
@@ -572,9 +647,40 @@ class AdminDashboard:
                 order["id"],
                 order["customer_name"],
                 order["email"],
-                f"{order['total_price']:,} VND",
+                f"{order.get('total_price', 0):,.0f} VND",
                 order["status"]
         ))
+        self.update_dashboard_summary()
+        
+    def calculate_total_revenue(self):
+        total_revenue = 0
+        # self.orders đã được tải mới bởi refresh_orders hoặc update_dashboard_summary
+        for order in self.orders:
+            if order.get('status') == 'delivered': # Chỉ tính các đơn hàng đã giao thành công
+                # Cộng trực tiếp giá trị 'total_price' đã có trong đơn hàng
+                total_revenue += order.get('total_price', 0) 
+        return total_revenue
+    
+    def update_dashboard_summary(self):
+        # Tải lại dữ liệu mới nhất cho dashboard.
+        # self.orders đã được tải bởi refresh_orders, nhưng tải lại ở đây là an toàn.
+        self.orders = load_orders()
+        self.products = load_products()
+        self.users = load_users()
+
+        # Tính toán các giá trị dựa trên dữ liệu mới nhất
+        total_revenue = self.calculate_total_revenue()
+        total_orders = len(self.orders)
+        total_delivered_orders = sum(1 for order in self.orders if order.get('status') == 'delivered')
+        total_products = len(self.products)
+        total_users = len(self.users)
+
+        # Cập nhật hiển thị trên các label của dashboard
+        self.revenue_label.config(text=f"{total_revenue:,.0f} VND")
+        self.orders_label.config(text=f"{total_orders}")
+        self.delivered_orders_label.config(text=f"{total_delivered_orders}")
+        self.products_label.config(text=f"{total_products}")
+        self.users_label.config(text=f"{total_users}")
 
     # ===== HÀM QUẢN LÝ TÀI KHOẢN =====
     def add_account(self):
@@ -1315,12 +1421,11 @@ class AdminDashboard:
 
         item = self.order_tree.item(selected[0])
         order_id = item["values"][0]
+        self.orders = load_orders()
+        order_to_update = next((ord for ord in self.orders if ord["id"] == order_id), None)
 
-        orders = self.load_orders()
-        order = next((ord for ord in orders if ord["id"] == order_id), None)
-
-        if not order:
-            messagebox.showerror("Lỗi", "Không tìm thấy đơn hàng")
+        if not order_to_update:
+            messagebox.showerror("Lỗi", "Không tìm thấy đơn hàng để cập nhật.")
             return
 
         status_window = tk.Toplevel(self.root)
@@ -1336,19 +1441,23 @@ class AdminDashboard:
 
         ttk.Label(main_frame, text="Chọn trạng thái mới:", style='TLabel', font=('Arial', 11, 'bold')).pack(pady=15)
 
-        status_var = tk.StringVar(value=order["status"])
+        status_var = tk.StringVar(value=order_to_update["status"]) # Use order_to_update's current status
         status_options = ttk.Combobox(main_frame, textvariable=status_var,
-                                    values=["pending", "processing", "shipped", "delivered", "cancelled"],
-                                    state="readonly", width=25)
+                                     values=["pending", "processing", "shipped", "delivered", "cancelled"],
+                                     state="readonly", width=25)
         status_options.pack(pady=10)
 
         def save_status():
-            order["status"] = status_var.get()
-            save_orders(self.orders)
-            messagebox.showinfo("Thành công", "Đã cập nhật trạng thái đơn hàng", parent=status_window)
-            status_window.destroy()
-            self.refresh_orders()
-
+                    new_status = status_var.get()
+                    
+                    order_to_update["status"] = new_status 
+                    
+                    save_orders(self.orders) 
+                    
+                    messagebox.showinfo("Thành công", "Đã cập nhật trạng thái đơn hàng", parent=status_window)
+                    status_window.destroy()
+                    self.refresh_orders() 
+                    
         ttk.Button(main_frame, text="Lưu thay đổi", command=save_status, width=18).pack(pady=20)
 
     # Hàm đăng xuất
