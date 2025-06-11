@@ -26,6 +26,16 @@ def get_soup(url, retry=0):
             return get_soup(url, retry + 1)
         print(f"⚠️ Không thể lấy {url} sau {MAX_RETRIES} lần thử: {str(e)}")
         return None
+    
+def get_category_type(category_name):
+    category_name_lower = category_name.lower()
+    
+    if "nón" in category_name_lower:
+        return 1
+    elif category_name_lower in ["phụ kiện phượt", "giá đỡ điện thoại", "tai nghe bluetooth mũ", "thùng xe máy givi"]:
+        return 2
+    else:
+        return 3
 
 def scrape_menu():
     print("🔍 Đang thu thập danh mục chính sản phẩm...")
@@ -63,10 +73,13 @@ def scrape_menu():
             # Làm sạch tên
             category_name = re.sub(r'\s+', ' ', category_name).strip()
             
+            
         # Bỏ qua nếu không có tên
         if not category_name:
             continue
-            
+        
+        loai = get_category_type(category_name)
+        
         # Tạo URL tuyệt đối
         category_url = urljoin(BASE_URL, href)
         
@@ -75,8 +88,8 @@ def scrape_menu():
             seen_urls.add(category_url)
             categories.append({
                 "type_name": category_name,
-                "url": category_url,
-                "type_id": len(categories) + 1
+                "type_id": len(categories) + 1,
+                "loai": loai
             })
             print(f"✅ Phát hiện danh mục chính: {category_name}")
 
@@ -294,7 +307,7 @@ def main():
     
     # Tạo danh sách chỉ chứa id và tên để lưu vào JSON
     categories_for_json = [
-        {"type_id": cat["type_id"], "type_name": cat["type_name"]} 
+        {"type_id": cat["type_id"], "type_name": cat["type_name"], "loai": cat["loai"]} 
         for cat in categories
     ]
     save_data(categories_for_json, "product_types.json")

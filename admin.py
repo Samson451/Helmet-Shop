@@ -3,6 +3,10 @@ from tkinter import ttk, messagebox, filedialog
 import json
 from Login import center_window
 from Data_process import load_users, save_users, load_products, save_products, load_categories, save_categories, load_orders, save_orders
+import crawl 
+import os 
+import threading
+import time
 
 # Ánh xạ loại hiển thị cho danh mục sản phẩm
 LOAI_HIEN_THI = {
@@ -46,13 +50,13 @@ class AdminDashboard:
         self.style.configure('Sidebar.TButton', font=('Segoe UI', 11, 'bold'), foreground='white', background='#2c3e50', relief='flat', anchor='w', padding=[20, 15] 
                              )
         self.style.map('Sidebar.TButton', background=[('active', '#34495e'), ('!disabled', '#2c3e50')], foreground=[('active', '#f39c12'), ('!disabled', 'white')] 
-                       )
+                        )
         
         # Style cho nút sidebar được chọn
         self.style.configure('Sidebar.Selected.TButton', font=('Segoe UI', 11, 'bold'), foreground='#f39c12', background='#34495e', relief='flat', anchor='w', padding=[20, 15]
                              )
         self.style.map('Sidebar.Selected.TButton', background=[('active', '#34495e'), ('!disabled', '#34495e')]
-                       )
+                        )
         
         # Thiết lập bố cục chính 
         self.main_container = ttk.Frame(root, style='TFrame')
@@ -76,6 +80,7 @@ class AdminDashboard:
         self.category_frame = ttk.Frame(self.notebook, style='TFrame')
         self.product_frame = ttk.Frame(self.notebook, style='TFrame')
         self.order_frame = ttk.Frame(self.notebook, style='TFrame')
+        self.crawl_frame = ttk.Frame(self.notebook, style='TFrame') 
 
         # Thêm các frame vào notebook
         self.notebook.add(self.dashboard_frame, text='') 
@@ -83,6 +88,7 @@ class AdminDashboard:
         self.notebook.add(self.category_frame, text='')
         self.notebook.add(self.product_frame, text='')
         self.notebook.add(self.order_frame, text='')
+        self.notebook.add(self.crawl_frame, text='') 
 
         # Danh sách các nút menu sidebar và tab hiện tại
         self.menu_buttons = {}
@@ -102,13 +108,14 @@ class AdminDashboard:
         self._add_sidebar_button("Danh mục", 2)
         self._add_sidebar_button("Sản phẩm", 3)
         self._add_sidebar_button("Đơn hàng", 4)
+        self._add_sidebar_button("Lấy dữ liệu", 5) 
 
         # Thanh giãn cách để đẩy nút đăng xuất xuống dưới cùng
         ttk.Frame(self.sidebar_frame, style='Sidebar.TFrame').pack(expand=True, fill='y')
 
         # Nút Đăng xuất
         logout_btn = ttk.Button(self.sidebar_frame, text=" Đăng xuất",
-                                style='Sidebar.TButton', command=self.logout)
+                                 style='Sidebar.TButton', command=self.logout)
         logout_btn.pack(fill='x', pady=10)
 
         # Chọn tab đầu tiên khi khởi tạo
@@ -120,6 +127,86 @@ class AdminDashboard:
         self.create_category_management()
         self.create_product_management()
         self.create_order_management()
+        self.create_data_crawl()
+
+        self.crawling_thread = None  
+        self.progress_update_job = None 
+
+    # === NEW: Data Crawl Tab ===
+    def create_data_crawl(self):  
+        ttk.Label(self.crawl_frame, text="Chức năng thu thập dữ liệu sản phẩm từ nguồn bên ngoài.",
+                  style='TLabel', font=('Arial', 11, 'bold')).pack(pady=20)
+
+        # Progress bar
+        self.crawl_progress = ttk.Progressbar(self.crawl_frame, orient="horizontal", length=400, mode="determinate")
+        self.crawl_progress.pack(pady=10)
+
+        # Progress label
+        self.crawl_status_label = ttk.Label(self.crawl_frame, text="Sẵn sàng để thu thập dữ liệu.", style='TLabel', font=('Arial', 10))
+        self.crawl_status_label.pack(pady=5)
+
+        # Start Crawl Button
+        self.start_crawl_button = ttk.Button(self.crawl_frame, text="Bắt đầu Lấy dữ liệu", command=self.start_crawl_process, width=25)
+        self.start_crawl_button.pack(pady=20)
+
+    def start_crawl_process(self):
+        if self.crawling_thread and self.crawling_thread.is_alive():
+            messagebox.showwarning("Cảnh báo", "Quá trình thu thập dữ liệu đang chạy.", parent=self.root)
+            return
+
+        if not messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn bắt đầu thu thập dữ liệu mới? Điều này có thể mất một thời gian và ghi đè dữ liệu sản phẩm và danh mục hiện có.", parent=self.root):
+            return
+
+        self.start_crawl_button.config(state=tk.DISABLED)
+        self.crawl_progress.config(value=0) # Reset progress
+        self.crawl_status_label.config(text="Đang bắt đầu thu thập dữ liệu...")
+
+        self.crawling_thread = threading.Thread(target=self._run_crawl_backend)
+        self.crawling_thread.start()
+        self._simulate_progress()
+
+    def _run_crawl_backend(self):
+        try:
+            print("Running crawl.main() in background...")
+            crawl.main()
+            print("Crawl.main() finished.")
+            self.root.after(0, self._crawl_finished, True)
+        except Exception as e:
+            print(f"Error during crawl: {e}")
+            self.root.after(0, self._crawl_finished, False, str(e)) 
+
+    def _simulate_progress(self):
+        current_progress = self.crawl_progress['value']
+        if self.crawling_thread and self.crawling_thread.is_alive() and current_progress < 99:
+
+            increment = 1 
+            new_progress = min(current_progress + increment, 99)
+            self.crawl_progress.config(value=new_progress)
+            self.crawl_status_label.config(text=f"Đang thu thập dữ liệu... {int(new_progress)}%")
+            self.progress_update_job = self.root.after(100, self._simulate_progress)
+        elif self.crawling_thread and self.crawling_thread.is_alive() and current_progress >= 99:
+            self.crawl_status_label.config(text="Đang hoàn tất quá trình...")
+            self.progress_update_job = self.root.after(500, self._simulate_progress) 
+       
+
+    def _crawl_finished(self, success, error_message=None):
+        if self.progress_update_job:
+            self.root.after_cancel(self.progress_update_job) 
+
+        self.crawl_progress.config(value=100)
+        self.start_crawl_button.config(state=tk.NORMAL)
+
+        if success:
+            self.crawl_status_label.config(text="Thu thập dữ liệu hoàn tất!")
+            messagebox.showinfo("Thành công", "Đã thu thập dữ liệu và cập nhật hệ thống.", parent=self.root)
+
+            self.load_initial_data()
+            self.refresh_users() 
+            self.refresh_products() 
+            self.refresh_orders() 
+        else:
+            self.crawl_status_label.config(text=f"Lỗi: {error_message}")
+            messagebox.showerror("Lỗi", f"Lỗi trong quá trình thu thập dữ liệu: {error_message}", parent=self.root)
 
     def on_closing(self):
         if messagebox.askokcancel("Thoát", "Bạn có muốn thoát chương trình không?"):
@@ -1257,7 +1344,7 @@ class AdminDashboard:
 
         def save_status():
             order["status"] = status_var.get()
-            self.save_orders(orders)
+            save_orders(self.orders)
             messagebox.showinfo("Thành công", "Đã cập nhật trạng thái đơn hàng", parent=status_window)
             status_window.destroy()
             self.refresh_orders()

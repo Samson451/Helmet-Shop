@@ -25,7 +25,7 @@
       "id": 3,
       "username": "owner",
       "password": "owner123",
-      "email": "owner@example.com",
+      "email": "longt2260@gmail.com",
       "cart": [],
       "type_acc": "owner"
     },
@@ -33,7 +33,7 @@
       "id": 4,
       "username": "long",
       "password": "long123",
-      "email": "longt2260@gmail.com",
+      "email": "longt@gmail.com",
       "cart": [],
       "type_acc": "customer"
     },

@@ -7,11 +7,21 @@ import datetime
 from Login import show_login_window
 from Helper import center_window
 from Data_process import load_users, save_users, load_products,load_categories, get_next_order_id
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 # ===== Load dữ liệu từ module xử lý =====
 product_data = load_products()
 type_data = load_categories()
+
+# THÔNG TIN CẤU HÌNH EMAIL
+SENDER_EMAIL = "longt2260@gmail.com"
+SENDER_PASSWORD = "" 
+RECEIVER_EMAIL = "longt2260@gmail.com" 
+SMTP_SERVER = "smtp.gmail.com" 
+SMTP_PORT = 587
 
 # Gom nhóm danh mục theo loại
 menu_structure = {
@@ -845,3 +855,5 @@ def init_main_ui():
 
 if __name__ == "__main__":
     init_main_ui()
+
+    
