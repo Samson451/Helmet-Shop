@@ -136,5 +136,77 @@
     "total_price": 6849000,
     "status": "pending",
     "order_date": "2025-06-01 22:16:06"
+  },
+  {
+    "id": 8,
+    "customer_name": "long",
+    "email": "longt@gmail.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 1
+      }
+    ],
+    "total_price": 349000,
+    "status": "pending",
+    "order_date": "2025-06-11 13:53:17"
+  },
+  {
+    "id": 9,
+    "customer_name": "long",
+    "email": "longt@gmail.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 1
+      },
+      {
+        "product_id": 2,
+        "quantity": 1
+      }
+    ],
+    "total_price": 6849000,
+    "status": "pending",
+    "order_date": "2025-06-11 14:10:06"
+  },
+  {
+    "id": 10,
+    "customer_name": "long",
+    "email": "longt@gmail.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 1
+      },
+      {
+        "product_id": 2,
+        "quantity": 1
+      }
+    ],
+    "total_price": 6849000,
+    "status": "pending",
+    "order_date": "2025-06-11 14:14:10"
+  },
+  {
+    "id": 11,
+    "customer_name": "customer",
+    "email": "customer@example.com",
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 1
+      },
+      {
+        "product_id": 6,
+        "quantity": 1
+      },
+      {
+        "product_id": 5,
+        "quantity": 1
+      }
+    ],
+    "total_price": 3849000,
+    "status": "pending",
+    "order_date": "2025-06-11 14:16:37"
   }
 ]

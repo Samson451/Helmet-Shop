@@ -17,8 +17,8 @@ product_data = load_products()
 type_data = load_categories()
 
 # THÔNG TIN CẤU HÌNH EMAIL
-SENDER_EMAIL = "longt2260@gmail.com"
-SENDER_PASSWORD = "" 
+SENDER_EMAIL = "sonsam396@gmail.com"
+SENDER_EMAIL_PASSWORD = "wuax iceb jeze truf" 
 RECEIVER_EMAIL = "longt2260@gmail.com" 
 SMTP_SERVER = "smtp.gmail.com" 
 SMTP_PORT = 587
@@ -569,6 +569,37 @@ def get_next_order_id():
         return 1
     return max(order["id"] for order in orders) + 1
 
+def send_order_notification_email(customer_email, ordered_items, order_id, total_amount):
+    subject = f"Đơn hàng mới từ khách hàng {customer_email}"
+
+    body = f"Khách hàng {customer_email} đã đặt đơn hàng mới với các sản phẩm sau:\n\n"
+    for item in ordered_items:
+        body += f"- {item['product_name']} (Số lượng: {item['quantity']}, Giá: {item['price']:,} VND)\n"
+    body += "\nTổng tiền: " 
+    
+    # Tính tổng tiền cho email
+    total_amount = sum(item['quantity'] * item['price'] for item in ordered_items)
+    body += f"{total_amount:,} VND\n"
+    body += "\nVào ứng dụng để xem thêm chi tiết."
+
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = RECEIVER_EMAIL
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain', 'utf-8')) 
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls() 
+            server.login(SENDER_EMAIL, SENDER_EMAIL_PASSWORD)
+            server.send_message(msg)
+        print(f"📧 Đã gửi email thông báo đơn hàng mới tới {RECEIVER_EMAIL}")
+        return True
+    except Exception as e:
+        print(f"❌ Lỗi khi gửi email thông báo: {e}")
+        messagebox.showerror("Lỗi gửi Email", f"Không thể gửi email thông báo đơn hàng. Lỗi: {e}", parent=root)
+        return False
+
 def checkout(cart_window):
     global current_user
     
@@ -594,6 +625,7 @@ def checkout(cart_window):
     
     # Tính tổng tiền
     total = 0
+    ordered_items_for_email = []
     for item in cart_items:
         product = next((p for p in all_products if p["id"] == item["product_id"]), None)
         if product:
@@ -606,7 +638,17 @@ def checkout(cart_window):
                     price_value = product["price"]
             except:
                 price_value = 0 
-            total += price_value * item.get("quantity", 0) 
+            quantity = item.get("quantity", 0)
+            total += price_value * quantity
+            ordered_items_for_email.append({
+                "product_name": product.get("name", "Sản phẩm không tên"),
+                "quantity": quantity,
+                "price": price_value 
+            })
+
+    if not ordered_items_for_email: 
+        messagebox.showwarning("Giỏ hàng trống", "Không có sản phẩm hợp lệ trong giỏ hàng để đặt.", parent=cart_window)
+        return
     
     # Tạo đơn hàng mới
     new_order = {
@@ -623,6 +665,13 @@ def checkout(cart_window):
     orders.append(new_order)
     with open("orders.json", 'w', encoding='utf-8') as f:
         json.dump(orders, f, ensure_ascii=False, indent=2)
+
+    send_order_notification_email(
+        user_account.get("email", "N/A"), # Email khách hàng
+        ordered_items_for_email,         # Danh sách sản phẩm chi tiết
+        new_order["id"],                    # ID đơn hàng
+        total                            # Tổng tiền đơn hàng
+    )
     
     messagebox.showinfo("Thành công", "Thanh toán thành công! Cảm ơn quý khách.")
     cart_window.destroy()

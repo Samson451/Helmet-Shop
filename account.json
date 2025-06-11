@@ -5,12 +5,7 @@
       "username": "customer",
       "password": "customer123",
       "email": "customer@example.com",
-      "cart": [
-        {
-          "product_id": 3,
-          "quantity": 1
-        }
-      ],
+      "cart": [],
       "type_acc": "customer"
     },
     {
