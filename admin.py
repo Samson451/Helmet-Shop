@@ -641,15 +641,15 @@ class AdminDashboard:
         for item in self.order_tree.get_children():
             self.order_tree.delete(item)
 
-        orders = self.load_orders()
-        for order in orders:
+        self.orders = load_orders() 
+        for order in self.orders: 
             self.order_tree.insert("", "end", values=(
-                order["id"],
-                order["customer_name"],
-                order["email"],
+                order.get('id'),
+                order.get('customer_name'),
+                order.get('email'),
                 f"{order.get('total_price', 0):,.0f} VND",
-                order["status"]
-        ))
+                order.get('status')
+            ))
         self.update_dashboard_summary()
         
     def calculate_total_revenue(self):
